@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/log_entry.dart';
 import '../utils/date_format.dart';
 
