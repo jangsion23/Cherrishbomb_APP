@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'api_client.dart';
 import '../models/ward_summary.dart';
 import '../models/ward_sensor.dart';
@@ -5,6 +6,7 @@ import '../models/ward_contact.dart';
 import '../models/log_entry.dart';
 import '../models/ward_health.dart';
 import '../models/app_notification.dart';
+import '../models/organization_link.dart';
 import '../utils/date_format.dart';
 
 /// 피보호자(ward) 관련 API 담당. (#2의 ApiClient 사용 → 토큰 자동 첨부)
@@ -119,5 +121,54 @@ class WardService {
   /// 전체 읽음 처리. PATCH /api/wards/me/notifications/read-all
   static Future<void> readAllNotifications() async {
     await ApiClient.dio.patch('/api/wards/me/notifications/read-all');
+  }
+
+  // ---- 기관 연동 (백엔드 #46 리뷰 중 → 목으로 선구현) ----
+  // TODO: #46 머지 후 _orgMock=false 로 바꾸면 실제 API로 동작.
+  static const bool _orgMock = true;
+
+  /// 연동 상태 조회. GET /api/wards/me/organization
+  static Future<OrganizationLink> getOrganization() async {
+    if (_orgMock) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      return OrganizationLink(linked: false); // 초기: 미연동
+    }
+    final res = await ApiClient.dio.get('/api/wards/me/organization');
+    return OrganizationLink.fromJson(res.data);
+  }
+
+  /// 기관 연동/변경. PATCH /api/wards/me/organization {orgCode: 숫자}
+  static Future<OrganizationLink> linkOrganization(int orgCode) async {
+    if (_orgMock) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      if (orgCode == 1001) {
+        return OrganizationLink(linked: true, organizationId: 3, organizationName: '○○종합사회복지관', orgCode: 1001);
+      }
+      throw _mockError(404, 'O003', '존재하지 않는 기관번호입니다.');
+    }
+    final res = await ApiClient.dio.patch('/api/wards/me/organization', data: {'orgCode': orgCode});
+    return OrganizationLink.fromJson(res.data);
+  }
+
+  /// 기관 연동 해제. DELETE /api/wards/me/organization (멱등)
+  static Future<void> unlinkOrganization() async {
+    if (_orgMock) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      return;
+    }
+    await ApiClient.dio.delete('/api/wards/me/organization');
+  }
+
+  // 목 에러: 실제 서버 에러(DioException + {code,message})와 같은 형태로 던짐.
+  static DioException _mockError(int status, String code, String message) {
+    final opts = RequestOptions(path: '/api/wards/me/organization');
+    return DioException(
+      requestOptions: opts,
+      response: Response(
+        requestOptions: opts,
+        statusCode: status,
+        data: {'status': status, 'code': code, 'message': message},
+      ),
+    );
   }
 }
