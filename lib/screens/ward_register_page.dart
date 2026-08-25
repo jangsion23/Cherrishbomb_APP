@@ -3,7 +3,6 @@ import 'package:dio/dio.dart';
 import 'package:go_router/go_router.dart';
 
 import '../services/ward_service.dart';
-import '../widgets/logout_button.dart';
 import '../widgets/reg_steps.dart';
 
 /// 회원가입 — 2단계 위저드 (STEP1 보호자 정보 / STEP2 피보호자 정보).
@@ -97,49 +96,50 @@ class _WardRegisterPageState extends State<WardRegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('회원가입'), actions: const [LogoutButton()]),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'STEP ${_step + 1} / 2',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              '회원가입',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              '보호자와 피보호자 정보를 입력해주세요',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey),
-            ),
-            const SizedBox(height: 16),
-            _tabToggle(),
-            const SizedBox(height: 20),
-            IndexedStack(
-              index: _step,
-              children: [
-                RegStep1(formKey: _form1, name: _guardianName, phone: _guardianPhone, relationship: _relationship),
-                RegStep2(
-                  formKey: _form2,
-                  name: _wardName,
-                  address: _address,
-                  phone: _wardPhone,
-                  disease: _disease,
-                  deviceMac: _deviceMac,
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            if (_loading) const Center(child: CircularProgressIndicator()) else _nav(),
-          ],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'STEP ${_step + 1} / 2',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                '회원가입',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                '보호자와 피보호자 정보를 입력해주세요',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey),
+              ),
+              const SizedBox(height: 16),
+              _tabToggle(),
+              const SizedBox(height: 20),
+              IndexedStack(
+                index: _step,
+                children: [
+                  RegStep1(formKey: _form1, name: _guardianName, phone: _guardianPhone, relationship: _relationship),
+                  RegStep2(
+                    formKey: _form2,
+                    name: _wardName,
+                    address: _address,
+                    phone: _wardPhone,
+                    disease: _disease,
+                    deviceMac: _deviceMac,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (_loading) const Center(child: CircularProgressIndicator()) else _nav(),
+            ],
+          ),
         ),
       ),
     );
