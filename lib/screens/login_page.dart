@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // PlatformException 사용
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../services/auth_service.dart';
@@ -47,7 +48,12 @@ class _LoginPageState extends State<LoginPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(Icons.favorite, size: 72, color: AppColors.danger),
+              Center(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(26),
+                  child: Image.asset('assets/images/logo.png', width: 108, height: 108, fit: BoxFit.cover),
+                ),
+              ),
               const SizedBox(height: 16),
               const Text(
                 '낙상감지 핫 라인 시스템',
@@ -81,7 +87,7 @@ class _LoginPageState extends State<LoginPage> {
       height: 52,
       child: FilledButton.icon(
         onPressed: () => _handleLogin('kakao'),
-        icon: const Icon(Icons.chat_bubble, size: 18, color: Color(0xFF3C1E1E)),
+        icon: SvgPicture.asset('assets/social/kakao.svg', width: 18, height: 18),
         label: const Text('카카오로 로그인'),
         style: FilledButton.styleFrom(
           backgroundColor: const Color(0xFFFEE500),
@@ -100,10 +106,7 @@ class _LoginPageState extends State<LoginPage> {
       height: 52,
       child: OutlinedButton.icon(
         onPressed: () => _handleLogin('google'),
-        icon: const Text(
-          'G',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF4285F4)),
-        ),
+        icon: SvgPicture.asset('assets/social/google.svg', width: 18, height: 18),
         label: const Text('구글로 로그인'),
         style: OutlinedButton.styleFrom(
           backgroundColor: Colors.white,
