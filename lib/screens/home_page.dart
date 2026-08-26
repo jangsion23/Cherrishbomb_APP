@@ -4,7 +4,10 @@ import '../utils/phone_format.dart';
 import '../models/ward_summary.dart';
 import '../models/ward_sensor.dart';
 import '../services/ward_service.dart';
+import '../theme/app_colors.dart';
+import '../utils/date_format.dart';
 import '../widgets/app_header.dart';
+import '../widgets/home_widgets.dart';
 
 /// 홈(보호자 모드). 피보호자 상태 요약 + 낙상 감지 센서 상태를 표시.
 class HomePage extends StatefulWidget {
@@ -90,7 +93,19 @@ class _HomePageState extends State<HomePage> {
           // 오프라인이면 흐리게(반투명) 처리 — 현재 상태가 아님을 시각적으로 표현
           Opacity(
             opacity: isOffline ? 0.5 : 1.0,
-            child: Column(children: [_statusCard(s), const SizedBox(height: 16), _sensorCard(sensor)]),
+            child: Column(
+              children: [
+                _statusCard(s),
+                const SizedBox(height: 16),
+                EmergencyCallCard(onCall: () => _callPhone('119')),
+                const SizedBox(height: 16),
+                ActivityStatsRow(totalMinutes: s.totalActivityMinutes, lastMinutes: s.lastActivityMinutes),
+                const SizedBox(height: 16),
+                const ActivityTimeline(),
+                const SizedBox(height: 16),
+                _sensorCard(sensor),
+              ],
+            ),
           ),
         ],
       ),
@@ -120,21 +135,21 @@ class _HomePageState extends State<HomePage> {
 
   // 상태 카드 (색상 + 이름/관계 + 전화 걸기 버튼)
   Widget _statusCard(WardSummary s) {
-    final (color, label, icon) = _statusStyle(s.status);
+    final st = StatusStyle.of(s.status);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: color.shade50,
+        color: st.bg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.shade200),
+        border: Border.all(color: st.color.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: [
           Row(
             children: [
               CircleAvatar(
-                backgroundColor: color,
-                child: Icon(icon, color: Colors.white),
+                backgroundColor: st.color,
+                child: Icon(st.icon, color: Colors.white),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -142,11 +157,18 @@ class _HomePageState extends State<HomePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      label,
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color.shade700),
+                      st.label,
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: st.color),
                     ),
                     const SizedBox(height: 2),
-                    Text('${s.relationship} (${s.wardName})'),
+                    Text('${s.relationship} (${s.wardName})', style: const TextStyle(color: AppColors.textPrimary)),
+                    if (s.deviceLastSeen != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        '마지막 업데이트: ${_lastSeen(s.deviceLastSeen)}',
+                        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -155,10 +177,15 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
-            child: OutlinedButton.icon(
+            child: FilledButton.icon(
               onPressed: () => _callPhone(s.phone),
               icon: const Icon(Icons.call),
               label: const Text('전화 걸기'),
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: st.color,
+                side: BorderSide(color: st.color.withValues(alpha: 0.4)),
+              ),
             ),
           ),
         ],
@@ -166,16 +193,17 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  (MaterialColor, String, IconData) _statusStyle(String status) {
-    switch (status) {
-      case 'DANGER':
-        return (Colors.red, '위험', Icons.warning);
-      case 'WARNING':
-        return (Colors.orange, '주의', Icons.error_outline);
-      case 'SAFE':
-      default:
-        return (Colors.green, '안전', Icons.check_circle);
-    }
+  String _lastSeen(String? raw) {
+    if (raw == null) return '수신 없음';
+    final d = DateTime.tryParse(raw);
+    return d == null ? raw : mdHm(d);
+  }
+
+  String _signal(int? rssi) {
+    if (rssi == null) return '-';
+    if (rssi >= -60) return '강함';
+    if (rssi >= -75) return '보통';
+    return '약함';
   }
 
   // 낙상 감지 센서 카드
@@ -197,9 +225,9 @@ class _HomePageState extends State<HomePage> {
             // 배터리·신호·위치 — 백엔드 미제공이라 '-'(비활성)로 표시. 제공 시 실제값으로 교체.
             Row(
               children: [
-                Expanded(child: _stat('배터리', '-')),
-                Expanded(child: _stat('신호', '-')),
-                Expanded(child: _stat('위치', '-')),
+                Expanded(child: _stat('배터리', sensor.batteryPct != null ? '${sensor.batteryPct}%' : '-')),
+                Expanded(child: _stat('신호', _signal(sensor.rssi))),
+                Expanded(child: _stat('최근 수신', _lastSeen(sensor.deviceLastSeen))),
               ],
             ),
             const Divider(height: 24),

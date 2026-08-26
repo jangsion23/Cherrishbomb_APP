@@ -1,67 +1,109 @@
 import 'package:flutter/material.dart';
 
 import '../models/log_entry.dart';
+import '../theme/app_colors.dart';
 import '../utils/date_format.dart';
+import 'status_badge.dart';
 
-/// 활동 로그 한 건을 카드로 표시.
-/// 색상·라벨은 백엔드 logType + status 기준. (와이어프레임 아님)
+/// 활동 로그 한 건을 와이어프레임 행으로 표시.
+/// 좌: 시각(HH:mm)·날짜(MM-DD) / 중: 제목·상세 / 우: 상태 배지.
+/// 라벨·색은 백엔드 logType + status 기준.
 class LogTile extends StatelessWidget {
   final LogEntry log;
   const LogTile(this.log, {super.key});
 
   @override
   Widget build(BuildContext context) {
-    final (color, label) = _badge(log);
-    final hasSensor = log.sensorDetail != null && log.sensorDetail!.isNotEmpty;
+    final d = log.detectedAt;
+    final detail = _detail(log);
     return Card(
-      child: ListTile(
-        leading: Icon(Icons.circle, color: color, size: 14),
-        title: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text([_dateTime(log.detectedAt), if (hasSensor) '센서: ${log.sensorDetail}'].join('\n')),
-        trailing: Text(_statusLabel(log.status), style: TextStyle(color: color, fontSize: 12)),
-        isThreeLine: hasSensor,
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 46,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    d == null ? '--:--' : hm(d),
+                    style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                  ),
+                  Text(d == null ? '' : md(d), style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                ],
+              ),
+            ),
+            Container(
+              width: 1,
+              height: 34,
+              color: AppColors.border,
+              margin: const EdgeInsets.symmetric(horizontal: 12),
+            ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _title(log),
+                    style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                  ),
+                  if (detail != null) ...[
+                    const SizedBox(height: 2),
+                    Text(detail, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                  ],
+                ],
+              ),
+            ),
+            StatusBadge(label: _statusLabel(log.status), color: _statusColor(log.status)),
+          ],
+        ),
       ),
     );
   }
 
-  // logType → (색상, 표시 라벨). status로 심각도 색을 구분.
-  (Color, String) _badge(LogEntry log) {
+  String _title(LogEntry log) {
     switch (log.logType) {
       case LogTypes.fallEvent:
-        return (_statusColor(log.status), '낙상 감지');
+        return '낙상 감지';
       case LogTypes.sensorFailure:
-        return (Colors.orange, '센서 장애');
+        return '센서 고장';
       case LogTypes.emergencyCall:
-        return (Colors.red, '119 연결');
+        return '119 연결';
       default:
-        return (Colors.grey, '알 수 없는 이벤트');
+        return '이벤트';
     }
+  }
+
+  String? _detail(LogEntry log) {
+    if (log.logType == LogTypes.sensorFailure && log.sensorDetail != null && log.sensorDetail!.isNotEmpty) {
+      return '${log.sensorDetail} 센서';
+    }
+    return null;
   }
 
   Color _statusColor(String status) {
     switch (status) {
       case MemberStatuses.danger:
-        return Colors.red;
+        return AppColors.danger;
       case MemberStatuses.warning:
-        return Colors.orange;
+        return AppColors.warning;
       default:
-        return Colors.green;
+        return AppColors.safe;
     }
   }
 
-  // status 한글 라벨 (영문 enum 노출 방지)
   String _statusLabel(String status) {
     switch (status) {
       case MemberStatuses.danger:
-        return '위험';
+        return 'DANGER';
       case MemberStatuses.warning:
-        return '경고';
+        return 'WARNING';
       case MemberStatuses.safe:
-        return '안전';
+        return 'SAFE';
       default:
         return status;
     }
   }
-
-  String _dateTime(DateTime? d) => d == null ? '-' : mdHm(d);
 }
