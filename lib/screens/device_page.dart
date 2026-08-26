@@ -4,6 +4,7 @@ import '../models/ward_sensor.dart';
 import '../services/ward_service.dart';
 import '../utils/date_format.dart';
 import '../widgets/device_widgets.dart';
+import '../widgets/app_header.dart';
 
 /// 기기 관리 화면 (와이어프레임 07).
 /// 온라인 상태·마지막 신호는 백엔드 getSensors 실데이터.
@@ -50,10 +51,7 @@ class _DevicePageState extends State<DevicePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('기기 관리')),
-      body: _buildBody(),
-    );
+    return Scaffold(appBar: const AppHeader(), body: _buildBody());
   }
 
   Widget _buildBody() {

@@ -4,6 +4,7 @@ import '../models/log_entry.dart';
 import '../services/ward_service.dart';
 import '../widgets/log_filter_bar.dart';
 import '../widgets/log_tile.dart';
+import '../widgets/app_header.dart';
 
 /// 활동·낙상 이력 화면. 날짜 필터 + 로그 목록 + 페이지네이션.
 /// 표시 기준은 백엔드 실제 데이터(logType + status)를 따른다. (와이어프레임은 참고용)
@@ -22,6 +23,7 @@ class _ActivityLogPageState extends State<ActivityLogPage> {
   DateTime? _from; // 시작일 필터 (선택)
   DateTime? _to; // 종료일 필터 (선택)
   final _scroll = ScrollController(); // 페이지 전환 시 상단으로 이동용
+  int _loadSeq = 0; // 조회 요청 세대 번호 (연속 선택 시 최신 응답만 반영)
 
   @override
   void initState() {
@@ -43,13 +45,15 @@ class _ActivityLogPageState extends State<ActivityLogPage> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('시작일이 종료일보다 늦을 수 없습니다.')));
       return;
     }
+    final seq = ++_loadSeq; // 이번 요청 세대
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
       final data = await WardService.getLogs(page: _pageNum, from: _from, to: _to);
-      if (!mounted) return;
+      // 더 최신 요청이 시작됐으면(연속 날짜 선택) 이 응답은 버린다
+      if (!mounted || seq != _loadSeq) return;
       setState(() {
         _data = data;
         _loading = false;
@@ -58,7 +62,7 @@ class _ActivityLogPageState extends State<ActivityLogPage> {
       if (_scroll.hasClients) _scroll.jumpTo(0);
     } catch (e) {
       debugPrint('활동 이력 로드 실패: $e');
-      if (!mounted) return;
+      if (!mounted || seq != _loadSeq) return;
       setState(() {
         _error = '활동 이력을 불러오지 못했습니다.';
         _loading = false;
@@ -66,30 +70,40 @@ class _ActivityLogPageState extends State<ActivityLogPage> {
     }
   }
 
-  // 날짜 선택 후 필터에 반영 (조회 버튼을 눌러야 실제 조회)
+  // 날짜를 탭하면 바로 확정(확인 버튼 없이)되고 곧장 첫 페이지부터 조회한다.
+  // 잘못된 범위(시작>종료)는 달력에서 아예 비활성화해 선택 자체가 안 되게 한다.
   Future<void> _pickDate({required bool isFrom}) async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: (isFrom ? _from : _to) ?? DateTime.now(),
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
-    );
-    if (picked == null) return;
-    setState(() => isFrom ? _from = picked : _to = picked);
-  }
+    // 시작일: 종료일보다 뒤로 못 감 / 종료일: 시작일보다 앞으로 못 감
+    final first = isFrom ? DateTime(2020) : (_from ?? DateTime(2020));
+    final last = isFrom ? (_to ?? DateTime.now()) : DateTime.now();
+    // initialDate는 반드시 [first, last] 안이어야 한다(아니면 오류) → 범위로 보정
+    var initial = (isFrom ? _from : _to) ?? DateTime.now();
+    if (initial.isBefore(first)) initial = first;
+    if (initial.isAfter(last)) initial = last;
 
-  // 조회 버튼: 첫 페이지부터 다시 조회 (가드는 _load에서 처리)
-  void _search() {
+    final picked = await showDialog<DateTime>(
+      context: context,
+      builder: (ctx) => Dialog(
+        child: SizedBox(
+          width: 340,
+          height: 380,
+          child: CalendarDatePicker(
+            initialDate: initial,
+            firstDate: first,
+            lastDate: last,
+            onDateChanged: (d) => Navigator.pop(ctx, d), // 탭 즉시 확정
+          ),
+        ),
+      ),
+    );
+    if (picked == null || !mounted) return;
+    setState(() => isFrom ? _from = picked : _to = picked);
     _pageNum = 0;
     _load();
   }
 
-  // 날짜 필터 초기화 → 전체 조회
-  void _resetFilter() {
-    setState(() {
-      _from = null;
-      _to = null;
-    });
+  // 조회 버튼: 첫 페이지부터 다시 조회 (가드는 _load에서 처리)
+  void _search() {
     _pageNum = 0;
     _load();
   }
@@ -102,10 +116,7 @@ class _ActivityLogPageState extends State<ActivityLogPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('활동 로그'),
-        actions: [IconButton(icon: const Icon(Icons.filter_alt_off), tooltip: '필터 초기화', onPressed: _resetFilter)],
-      ),
+      appBar: const AppHeader(),
       body: Column(
         children: [
           LogFilterBar(

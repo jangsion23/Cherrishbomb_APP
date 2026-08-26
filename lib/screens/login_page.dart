@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // PlatformException 사용
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../services/auth_service.dart';
+import '../theme/app_colors.dart';
 
 /// 로그인 화면. 로딩 상태가 바뀌므로 StatefulWidget.
 class LoginPage extends StatefulWidget {
@@ -22,17 +24,14 @@ class _LoginPageState extends State<LoginPage> {
       final result = await AuthService.login(provider);
       if (!mounted) return; // 화면이 이미 사라졌으면 중단
       // 신규 사용자면 피보호자 등록 화면, 기존이면 홈으로.
-      // context.go: 스택을 갈아끼워 뒤로가기로 로그인에 못 돌아오게 함
       context.go(result.isNewUser ? '/register' : '/home');
     } on PlatformException catch (e) {
       if (!mounted) return;
       // 사용자가 로그인 창을 그냥 닫음(취소) → 에러 아님, 조용히 넘김
       if (e.code == 'CANCELED') return;
-      // 그 외 플랫폼 오류만 메시지 표시
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('로그인 실패: ${e.message ?? e.code}')));
     } catch (e) {
       if (!mounted) return;
-      // 그 밖의 오류 표시
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('로그인 실패: $e')));
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -49,7 +48,12 @@ class _LoginPageState extends State<LoginPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(Icons.favorite, size: 72, color: Colors.deepPurple),
+              Center(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(26),
+                  child: Image.asset('assets/images/logo.png', width: 108, height: 108, fit: BoxFit.cover),
+                ),
+              ),
               const SizedBox(height: 16),
               const Text(
                 '낙상감지 핫 라인 시스템',
@@ -60,19 +64,56 @@ class _LoginPageState extends State<LoginPage> {
               const Text(
                 '보호자 로그인',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.grey),
+                style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
               ),
               const SizedBox(height: 48),
-              // 로그인 중이면 로딩 표시, 아니면 버튼들 표시
               if (_loading)
                 const Center(child: CircularProgressIndicator())
               else ...[
-                FilledButton(onPressed: () => _handleLogin('kakao'), child: const Text('카카오로 로그인')),
+                _kakaoButton(),
                 const SizedBox(height: 12),
-                OutlinedButton(onPressed: () => _handleLogin('google'), child: const Text('구글로 로그인')),
+                _googleButton(),
               ],
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  // 카카오: 브랜드 노란색 + 말풍선 아이콘
+  Widget _kakaoButton() {
+    return SizedBox(
+      height: 52,
+      child: FilledButton.icon(
+        onPressed: () => _handleLogin('kakao'),
+        icon: SvgPicture.asset('assets/social/kakao.svg', width: 18, height: 18),
+        label: const Text('카카오로 로그인'),
+        style: FilledButton.styleFrom(
+          backgroundColor: const Color(0xFFFEE500),
+          foregroundColor: const Color(0xFF3C1E1E),
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+        ),
+      ),
+    );
+  }
+
+  // 구글: 흰 배경 + 테두리 + 'G' 마크
+  Widget _googleButton() {
+    return SizedBox(
+      height: 52,
+      child: OutlinedButton.icon(
+        onPressed: () => _handleLogin('google'),
+        icon: SvgPicture.asset('assets/social/google.svg', width: 18, height: 18),
+        label: const Text('구글로 로그인'),
+        style: OutlinedButton.styleFrom(
+          backgroundColor: Colors.white,
+          foregroundColor: AppColors.textPrimary,
+          side: const BorderSide(color: AppColors.border),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
         ),
       ),
     );

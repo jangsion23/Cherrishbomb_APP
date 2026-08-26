@@ -31,6 +31,9 @@ class WardService {
     required String phone,
     required String relationship,
     required String deviceMac,
+    String? guardianName,
+    String? guardianPhone,
+    String? disease,
   }) async {
     final data = <String, dynamic>{
       'name': name,
@@ -39,9 +42,15 @@ class WardService {
       'relationship': relationship,
       'deviceMac': deviceMac,
     };
-    if (birthDate != null && birthDate.isNotEmpty) {
-      data['birthDate'] = birthDate;
+    // 빈 값은 필드 자체를 안 보낸다 (서버에서 null 처리)
+    if (birthDate != null && birthDate.isNotEmpty) data['birthDate'] = birthDate;
+    if (guardianName != null && guardianName.isNotEmpty) {
+      data['guardianName'] = guardianName;
     }
+    if (guardianPhone != null && guardianPhone.isNotEmpty) {
+      data['guardianPhone'] = guardianPhone;
+    }
+    if (disease != null && disease.isNotEmpty) data['disease'] = disease;
     await ApiClient.dio.post('/api/wards/me', data: data);
   }
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-
-import '../widgets/logout_button.dart';
+import 'package:go_router/go_router.dart';
+import '../services/auth_service.dart';
+import '../theme/app_colors.dart';
+import '../widgets/app_header.dart';
 import 'contacts_page.dart';
 import 'health_page.dart';
 import 'organization_page.dart';
@@ -12,7 +14,7 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('설정'), actions: const [LogoutButton()]),
+      appBar: const AppHeader(),
       body: ListView(
         children: [
           ListTile(
@@ -45,6 +47,15 @@ class SettingsPage extends StatelessWidget {
             },
           ),
           const Divider(height: 1),
+          ListTile(
+            leading: const Icon(Icons.logout, color: AppColors.danger),
+            title: const Text('로그아웃', style: TextStyle(color: AppColors.danger)),
+            onTap: () async {
+              await AuthService.logout();
+              if (!context.mounted) return;
+              context.go('/login'); // 스택 갈아끼움
+            },
+          ),
         ],
       ),
     );

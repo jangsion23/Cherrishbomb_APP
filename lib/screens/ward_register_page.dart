@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:go_router/go_router.dart';
 
+import '../services/auth_service.dart';
 import '../services/ward_service.dart';
-import '../widgets/logout_button.dart';
+import '../theme/app_colors.dart';
 import '../widgets/reg_steps.dart';
 
 /// 회원가입 — 2단계 위저드 (STEP1 보호자 정보 / STEP2 피보호자 정보).
@@ -69,7 +70,9 @@ class _WardRegisterPageState extends State<WardRegisterPage> {
         phone: _wardPhone.text.trim(),
         relationship: _relationship.text.trim(),
         deviceMac: _deviceMac.text.trim().toUpperCase(),
-        // TODO(백엔드): 보호자 이름/연락처, 기저질환(_disease) 저장 필드 연동
+        guardianName: _guardianName.text.trim(),
+        guardianPhone: _guardianPhone.text.trim(),
+        disease: _disease.text.trim(),
       );
       if (!mounted) return;
       _snack('회원가입이 완료되었습니다.');
@@ -94,52 +97,70 @@ class _WardRegisterPageState extends State<WardRegisterPage> {
 
   void _snack(String m) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
 
+  // 가입 중단 시 안전하게 로그아웃 (토큰 삭제 후 로그인 화면으로)
+  Future<void> _logout() async {
+    await AuthService.logout();
+    if (!mounted) return;
+    context.go('/login');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('회원가입'), actions: const [LogoutButton()]),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'STEP ${_step + 1} / 2',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              '회원가입',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              '보호자와 피보호자 정보를 입력해주세요',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey),
-            ),
-            const SizedBox(height: 16),
-            _tabToggle(),
-            const SizedBox(height: 20),
-            IndexedStack(
-              index: _step,
-              children: [
-                RegStep1(formKey: _form1, name: _guardianName, phone: _guardianPhone, relationship: _relationship),
-                RegStep2(
-                  formKey: _form2,
-                  name: _wardName,
-                  address: _address,
-                  phone: _wardPhone,
-                  disease: _disease,
-                  deviceMac: _deviceMac,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // 가입을 중단하려는 사용자를 위한 로그아웃 경로 (상단 AppBar 대체)
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: _logout,
+                  icon: const Icon(Icons.logout, size: 16),
+                  label: const Text('로그아웃'),
+                  style: TextButton.styleFrom(foregroundColor: AppColors.textSecondary),
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            if (_loading) const Center(child: CircularProgressIndicator()) else _nav(),
-          ],
+              ),
+              Text(
+                'STEP ${_step + 1} / 2',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                '회원가입',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                '보호자와 피보호자 정보를 입력해주세요',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey),
+              ),
+              const SizedBox(height: 16),
+              _tabToggle(),
+              const SizedBox(height: 20),
+              IndexedStack(
+                index: _step,
+                children: [
+                  RegStep1(formKey: _form1, name: _guardianName, phone: _guardianPhone, relationship: _relationship),
+                  RegStep2(
+                    formKey: _form2,
+                    name: _wardName,
+                    address: _address,
+                    phone: _wardPhone,
+                    disease: _disease,
+                    deviceMac: _deviceMac,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (_loading) const Center(child: CircularProgressIndicator()) else _nav(),
+            ],
+          ),
         ),
       ),
     );
