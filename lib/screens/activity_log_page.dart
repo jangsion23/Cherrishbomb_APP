@@ -23,6 +23,7 @@ class _ActivityLogPageState extends State<ActivityLogPage> {
   DateTime? _from; // 시작일 필터 (선택)
   DateTime? _to; // 종료일 필터 (선택)
   final _scroll = ScrollController(); // 페이지 전환 시 상단으로 이동용
+  int _loadSeq = 0; // 조회 요청 세대 번호 (연속 선택 시 최신 응답만 반영)
 
   @override
   void initState() {
@@ -44,13 +45,15 @@ class _ActivityLogPageState extends State<ActivityLogPage> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('시작일이 종료일보다 늦을 수 없습니다.')));
       return;
     }
+    final seq = ++_loadSeq; // 이번 요청 세대
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
       final data = await WardService.getLogs(page: _pageNum, from: _from, to: _to);
-      if (!mounted) return;
+      // 더 최신 요청이 시작됐으면(연속 날짜 선택) 이 응답은 버린다
+      if (!mounted || seq != _loadSeq) return;
       setState(() {
         _data = data;
         _loading = false;
@@ -59,7 +62,7 @@ class _ActivityLogPageState extends State<ActivityLogPage> {
       if (_scroll.hasClients) _scroll.jumpTo(0);
     } catch (e) {
       debugPrint('활동 이력 로드 실패: $e');
-      if (!mounted) return;
+      if (!mounted || seq != _loadSeq) return;
       setState(() {
         _error = '활동 이력을 불러오지 못했습니다.';
         _loading = false;
@@ -93,7 +96,7 @@ class _ActivityLogPageState extends State<ActivityLogPage> {
         ),
       ),
     );
-    if (picked == null) return;
+    if (picked == null || !mounted) return;
     setState(() => isFrom ? _from = picked : _to = picked);
     _pageNum = 0;
     _load();

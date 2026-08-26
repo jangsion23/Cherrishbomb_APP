@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:go_router/go_router.dart';
 
+import '../services/auth_service.dart';
 import '../services/ward_service.dart';
+import '../theme/app_colors.dart';
 import '../widgets/reg_steps.dart';
 
 /// 회원가입 — 2단계 위저드 (STEP1 보호자 정보 / STEP2 피보호자 정보).
@@ -68,7 +70,9 @@ class _WardRegisterPageState extends State<WardRegisterPage> {
         phone: _wardPhone.text.trim(),
         relationship: _relationship.text.trim(),
         deviceMac: _deviceMac.text.trim().toUpperCase(),
-        // TODO(백엔드): 보호자 이름/연락처, 기저질환(_disease) 저장 필드 연동
+        guardianName: _guardianName.text.trim(),
+        guardianPhone: _guardianPhone.text.trim(),
+        disease: _disease.text.trim(),
       );
       if (!mounted) return;
       _snack('회원가입이 완료되었습니다.');
@@ -93,6 +97,13 @@ class _WardRegisterPageState extends State<WardRegisterPage> {
 
   void _snack(String m) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
 
+  // 가입 중단 시 안전하게 로그아웃 (토큰 삭제 후 로그인 화면으로)
+  Future<void> _logout() async {
+    await AuthService.logout();
+    if (!mounted) return;
+    context.go('/login');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -102,6 +113,16 @@ class _WardRegisterPageState extends State<WardRegisterPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // 가입을 중단하려는 사용자를 위한 로그아웃 경로 (상단 AppBar 대체)
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: _logout,
+                  icon: const Icon(Icons.logout, size: 16),
+                  label: const Text('로그아웃'),
+                  style: TextButton.styleFrom(foregroundColor: AppColors.textSecondary),
+                ),
+              ),
               Text(
                 'STEP ${_step + 1} / 2',
                 textAlign: TextAlign.center,
