@@ -27,6 +27,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   WardSensor? _sensor;
 
   Timer? _poll; // 자동 새로고침 타이머
+  bool _paused = false; // 앱이 백그라운드면 true → 폴링 스케줄 금지
 
   @override
   void initState() {
@@ -46,9 +47,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _silentRefresh();
-      _schedulePoll();
+      _paused = false;
+      _tick(); // 즉시 한 번 갱신하고, 끝나면 스케줄 재개
     } else {
+      _paused = true;
       _poll?.cancel();
     }
   }
@@ -60,14 +62,17 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     return (st == 'DANGER' || st == 'WARNING') ? const Duration(seconds: 2) : const Duration(seconds: 5);
   }
 
+  // 스케줄 함수 자체에서 lifecycle을 확인한다.
+  // 백그라운드로 간 뒤 진행 중이던 _tick·_load가 뒤늦게 호출해도 새 타이머가 안 생긴다.
   void _schedulePoll() {
     _poll?.cancel();
+    if (_paused || !mounted) return;
     _poll = Timer(_pollInterval, _tick);
   }
 
   Future<void> _tick() async {
     await _silentRefresh();
-    if (mounted) _schedulePoll(); // 매번 현재 상태 기준으로 다음 간격 재설정
+    _schedulePoll(); // 매번 현재 상태 기준으로 다음 간격 재설정 (paused면 내부에서 중단)
   }
 
   // 스피너 없이 조용히 최신값만 반영. 실패해도 기존 화면 유지.
@@ -79,10 +84,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         _summary = results[0] as WardSummary;
         _sensor = results[1] as WardSensor;
       });
-      // 상태 악화로 새 알림이 생겼을 수 있으니 안읽음 배지도 함께 갱신
-      NotificationStore.refresh();
     } catch (_) {
-      // 자동 새로고침 실패는 조용히 무시 (다음 주기에 재시도)
+      // 요약/센서 실패는 조용히 무시 (다음 주기에 재시도)
+    } finally {
+      // 홈 요약/센서 실패와 무관하게 안읽음 배지는 갱신한다.
+      // await 해서 미완료 갱신이 다음 폴링과 겹치지 않게 한다.
+      await NotificationStore.refresh();
     }
   }
 

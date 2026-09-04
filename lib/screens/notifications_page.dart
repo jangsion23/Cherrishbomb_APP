@@ -38,9 +38,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
       _error = null;
     });
     try {
+      final gen = NotificationStore.generation; // 조회 시작 시점의 세션 세대
       final data = await WardService.getNotifications(page: _pageNum);
-      NotificationStore.set(data.unreadCount); // 전역 배지 동기화
-      if (!mounted) return;
+      if (!mounted) return; // dispose(로그아웃 등) 뒤면 전역 상태를 건드리지 않음
+      NotificationStore.set(data.unreadCount, gen: gen); // 지난 세션 응답이면 무시됨
       setState(() {
         _data = data;
         _loading = false;
