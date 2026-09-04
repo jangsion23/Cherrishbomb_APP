@@ -4,7 +4,7 @@ import 'package:dio/dio.dart';
 import '../models/organization_link.dart';
 import '../services/ward_service.dart';
 
-/// 기관 연동 화면. 연동 전=기관번호(6자리) 입력, 연동 후=연동됨 + 해제/변경.
+/// 기관 연동 화면. 연동 전=기관번호(8자리) 입력, 연동 후=연동됨 + 해제/변경.
 /// 에러(O003·C001)는 입력창 바로 아래 inline으로 표시.
 class OrganizationPage extends StatefulWidget {
   const OrganizationPage({super.key});
@@ -58,8 +58,8 @@ class _OrganizationPageState extends State<OrganizationPage> {
   Future<void> _submit() async {
     final text = _code.text.trim();
     setState(() => _fieldError = null);
-    if (text.length != 6) {
-      setState(() => _fieldError = '기관번호 6자리를 입력해주세요.');
+    if (text.length != 8) {
+      setState(() => _fieldError = '기관번호 8자리를 입력해주세요.');
       return;
     }
     setState(() => _saving = true);
@@ -163,12 +163,12 @@ class _OrganizationPageState extends State<OrganizationPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('기관에서 안내받은 6자리 기관번호를 입력하세요.', style: TextStyle(color: Colors.grey)),
+          const Text('기관에서 안내받은 8자리 기관번호를 입력하세요.', style: TextStyle(color: Colors.grey)),
           const SizedBox(height: 16),
           TextField(
             controller: _code,
             keyboardType: TextInputType.number,
-            maxLength: 6,
+            maxLength: 8,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             decoration: InputDecoration(
               labelText: '기관번호',
