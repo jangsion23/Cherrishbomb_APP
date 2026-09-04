@@ -2,7 +2,9 @@ import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 
 import '../config/api_config.dart';
 import 'api_client.dart';
+import 'notification_store.dart';
 import 'token_storage.dart';
+import 'ward_service.dart';
 
 /// 로그인 결과. isNewUser: 아직 피보호자 등록 안 한 신규 사용자인지.
 class AuthResult {
@@ -49,5 +51,8 @@ class AuthService {
       // 네트워크 실패 등은 무시 — 로컬 정리가 우선
     }
     await TokenStorage.clear();
+    // 다음 사용자를 위해 캐시·배지 상태 초기화
+    WardService.clearCache();
+    NotificationStore.reset();
   }
 }

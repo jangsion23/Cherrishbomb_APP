@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/app_notification.dart';
+import '../services/notification_store.dart';
 import '../services/ward_service.dart';
 import '../theme/app_colors.dart';
 import '../utils/date_format.dart';
@@ -38,6 +39,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
     });
     try {
       final data = await WardService.getNotifications(page: _pageNum);
+      NotificationStore.set(data.unreadCount); // 전역 배지 동기화
       if (!mounted) return;
       setState(() {
         _data = data;
