@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 class TokenStorage {
   static const _storage = FlutterSecureStorage();
   static const _tokenKey = 'accessToken';
+  static const _refreshKey = 'refreshToken';
 
   // 토큰 저장 (로그인 성공 시)
   static Future<void> saveToken(String token) async {
@@ -18,5 +19,21 @@ class TokenStorage {
   // 토큰 삭제 (로그아웃 / 만료 시)
   static Future<void> deleteToken() async {
     await _storage.delete(key: _tokenKey);
+  }
+
+  // 액세스 + 리프레시 토큰 함께 저장 (로그인/재발급 시)
+  static Future<void> saveTokens({required String accessToken, String? refreshToken}) async {
+    await _storage.write(key: _tokenKey, value: accessToken);
+    if (refreshToken != null && refreshToken.isNotEmpty) {
+      await _storage.write(key: _refreshKey, value: refreshToken);
+    }
+  }
+
+  static Future<String?> getRefreshToken() => _storage.read(key: _refreshKey);
+
+  // 로그아웃 시 전부 삭제
+  static Future<void> clear() async {
+    await _storage.delete(key: _tokenKey);
+    await _storage.delete(key: _refreshKey);
   }
 }

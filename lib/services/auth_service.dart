@@ -1,6 +1,7 @@
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 
 import '../config/api_config.dart';
+import 'api_client.dart';
 import 'token_storage.dart';
 
 /// 로그인 결과. isNewUser: 아직 피보호자 등록 안 한 신규 사용자인지.
@@ -25,20 +26,28 @@ class AuthService {
     // 2) 복귀한 주소에서 token, isNewUser 값을 꺼낸다.
     final uri = Uri.parse(result);
     final token = uri.queryParameters['token'];
+    // 백엔드가 함께 내려주는 리프레시 토큰(있으면 저장)
+    final refreshToken = uri.queryParameters['refreshToken'];
     final isNewUser = uri.queryParameters['isNewUser'] == 'true';
 
     if (token == null) {
       throw Exception('로그인 응답에 토큰이 없습니다.');
     }
 
-    // 3) 토큰을 보안 저장소에 저장한다. (#2에서 만든 TokenStorage)
-    await TokenStorage.saveToken(token);
+    // 3) 액세스 + 리프레시 토큰을 보안 저장소에 저장한다.
+    await TokenStorage.saveTokens(accessToken: token, refreshToken: refreshToken);
 
     return AuthResult(isNewUser);
   }
 
-  /// 로그아웃. 저장된 토큰을 삭제한다.
+  /// 로그아웃. 서버에 폐기 요청 후 로컬 토큰 삭제.
   static Future<void> logout() async {
-    await TokenStorage.deleteToken();
+    try {
+      // 서버의 리프레시 토큰도 폐기 (실패해도 로컬은 반드시 정리)
+      await ApiClient.dio.post('/api/auth/logout');
+    } catch (_) {
+      // 네트워크 실패 등은 무시 — 로컬 정리가 우선
+    }
+    await TokenStorage.clear();
   }
 }

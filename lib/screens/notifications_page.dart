@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../models/app_notification.dart';
 import '../services/ward_service.dart';
+import '../theme/app_colors.dart';
 import '../utils/date_format.dart';
+import '../widgets/status_badge.dart';
 
 /// 알림함 화면. 낙상/경고/기기 알림 목록 + 읽음 처리.
 class NotificationsPage extends StatefulWidget {
@@ -133,33 +135,71 @@ class _NotificationsPageState extends State<NotificationsPage> {
   }
 
   Widget _card(AppNotification n) {
-    final (color, label) = _badge(n.notificationType);
+    final (color, badge, title) = _meta(n.notificationType);
     return Card(
-      // 미읽음은 옅은 색 배경으로 구분
-      color: n.isRead ? null : color.withValues(alpha: 0.08),
-      child: ListTile(
+      // 미읽음은 상태색 옅은 배경으로 구분
+      color: n.isRead ? null : color.withValues(alpha: 0.06),
+      margin: const EdgeInsets.only(bottom: 10),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
         onTap: () => _tap(n),
-        leading: Icon(Icons.circle, size: 14, color: color),
-        title: Text(label, style: TextStyle(fontWeight: n.isRead ? FontWeight.normal : FontWeight.bold)),
-        subtitle: Text('${n.memberName} · ${_time(n.createdAt)}'),
-        trailing: n.isRead ? null : const Icon(Icons.circle, size: 8, color: Colors.red),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        StatusBadge(label: badge, color: color),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            title,
+                            style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '${n.memberName} · ${_time(n.createdAt)}',
+                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+              if (!n.isRead)
+                Container(
+                  margin: const EdgeInsets.only(top: 4, left: 8),
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(color: AppColors.danger, shape: BoxShape.circle),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  // notificationType → (색상, 표시 라벨)
-  (Color, String) _badge(String type) {
+  // notificationType → (상태색, 배지 라벨, 한국어 제목)
+  // 배지는 SAFE/WARNING/DANGER 축, 기기 문제(DEVICE_OFFLINE)는 회색 "기기".
+  (Color, String, String) _meta(String type) {
     switch (type) {
       case NotiTypes.fall:
-        return (Colors.red, '낙상 감지');
+        return (AppColors.danger, 'DANGER', '낙상 감지');
       case NotiTypes.emergency:
-        return (Colors.red, '긴급 연결');
+        return (AppColors.danger, 'DANGER', '긴급 연결');
       case NotiTypes.warning:
-        return (Colors.orange, '활동 경고');
+        return (AppColors.warning, 'WARNING', '활동 경고');
       case NotiTypes.deviceOffline:
-        return (Colors.grey, '기기 연결 끊김');
+        return (AppColors.device, '기기', '기기 연결 끊김');
       default:
-        return (Colors.grey, type);
+        return (AppColors.device, type, type);
     }
   }
 

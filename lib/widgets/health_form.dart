@@ -54,7 +54,7 @@ class HealthForm extends StatelessWidget {
       controller: c,
       maxLines: lines,
       maxLength: max, // 초과 입력 차단 + 하단 카운터 (서버 400 방지)
-      decoration: InputDecoration(labelText: label, hintText: hint, border: const OutlineInputBorder()),
+      decoration: InputDecoration(labelText: label, hintText: hint),
     );
   }
 }

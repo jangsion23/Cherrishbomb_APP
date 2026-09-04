@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/ward_sensor.dart';
 import '../services/ward_service.dart';
+import '../theme/app_colors.dart';
 import '../utils/date_format.dart';
 import '../widgets/device_widgets.dart';
 import '../widgets/app_header.dart';
@@ -76,28 +77,29 @@ class _DevicePageState extends State<DevicePage> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          const Padding(
+            padding: EdgeInsets.only(bottom: 4),
+            child: Text('기기 관리', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+          ),
           const Center(
-            child: Text('라즈베리파이 낙상 감지 센서', style: TextStyle(color: Colors.grey)),
+            child: Text('라즈베리파이 낙상 감지 센서', style: TextStyle(color: AppColors.textSecondary)),
           ),
           const SizedBox(height: 12),
           DeviceOnlineCard(online: s.deviceOnline, lastSeen: _lastSeen(s.deviceLastSeen)),
           const SizedBox(height: 12),
-          // 배터리·신호는 백엔드 미제공 → 임시 표시
-          const Row(
+          Row(
             children: [
               Expanded(
-                child: DeviceStatBox(value: '—', label: '배터리'),
+                child: DeviceStatBox(value: s.batteryPct != null ? '${s.batteryPct}%' : '—', label: '배터리'),
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Expanded(
-                child: DeviceStatBox(value: '—', label: '신호'),
+                child: DeviceStatBox(value: _signal(s.rssi), label: '신호'),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          const DeviceInstallCard(location: '미설정'),
-          const SizedBox(height: 12),
-          const DeviceHistoryCard(),
+          DeviceSensorCard(vibrator: s.vibrator, radar: s.radar, thermal: s.thermal),
         ],
       ),
     );
@@ -107,5 +109,13 @@ class _DevicePageState extends State<DevicePage> {
     if (raw == null) return '수신 없음';
     final d = DateTime.tryParse(raw);
     return d == null ? raw : mdHm(d);
+  }
+
+  // rssi(dBm) → 강함/보통/약함
+  String _signal(int? rssi) {
+    if (rssi == null) return '—';
+    if (rssi >= -60) return '강함';
+    if (rssi >= -75) return '보통';
+    return '약함';
   }
 }
