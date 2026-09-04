@@ -150,9 +150,9 @@ class WardService {
     await ApiClient.dio.patch('/api/wards/me/notifications/read-all');
   }
 
-  // ---- 기관 연동 (백엔드 #46 리뷰 중 → 목으로 선구현) ----
-  // TODO: #46 머지 후 _orgMock=false 로 바꾸면 실제 API로 동작.
-  static const bool _orgMock = true;
+  // ---- 기관 연동 ----
+  // #46 머지·배포 완료로 실제 API 사용. 목 코드는 서버 없이 볼 때만 true로.
+  static const bool _orgMock = false;
 
   /// 연동 상태 조회. GET /api/wards/me/organization
   static Future<OrganizationLink> getOrganization() async {
@@ -168,8 +168,8 @@ class WardService {
   static Future<OrganizationLink> linkOrganization(int orgCode) async {
     if (_orgMock) {
       await Future.delayed(const Duration(milliseconds: 300));
-      if (orgCode == 1001) {
-        return OrganizationLink(linked: true, organizationId: 3, organizationName: '○○종합사회복지관', orgCode: 1001);
+      if (orgCode == 10001001) {
+        return OrganizationLink(linked: true, organizationId: 3, organizationName: '○○종합사회복지관', orgCode: 10001001);
       }
       throw _mockError(404, 'O003', '존재하지 않는 기관번호입니다.');
     }
