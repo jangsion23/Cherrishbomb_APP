@@ -73,10 +73,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   // 스피너 없이 조용히 최신값만 반영. 실패해도 기존 화면 유지.
   Future<void> _silentRefresh() async {
     try {
-      final results = await Future.wait([
-        WardService.getSummary(force: true),
-        WardService.getSensors(force: true),
-      ]);
+      final results = await Future.wait([WardService.getSummary(force: true), WardService.getSensors(force: true)]);
       if (!mounted) return;
       setState(() {
         _summary = results[0] as WardSummary;

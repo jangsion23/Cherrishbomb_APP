@@ -37,11 +37,7 @@ class _AppHeaderState extends State<AppHeader> {
           tooltip: '알림함',
           icon: ValueListenableBuilder<int>(
             valueListenable: NotificationStore.unread,
-            builder: (_, unread, child) => Badge(
-              isLabelVisible: unread > 0,
-              label: Text('$unread'),
-              child: child,
-            ),
+            builder: (_, unread, child) => Badge(isLabelVisible: unread > 0, label: Text('$unread'), child: child),
             child: const Icon(Icons.notifications_none),
           ),
           // 알림함에서 읽고 돌아오면 배지를 최신화
