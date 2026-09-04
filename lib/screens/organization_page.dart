@@ -3,6 +3,7 @@ import 'package:flutter/services.dart'; // 숫자 입력 포맷터
 import 'package:dio/dio.dart';
 import '../models/organization_link.dart';
 import '../services/ward_service.dart';
+import '../theme/app_colors.dart';
 
 /// 기관 연동 화면. 연동 전=기관번호(6자리) 입력, 연동 후=연동됨 + 해제/변경.
 /// 에러(O003·C001)는 입력창 바로 아래 inline으로 표시.
@@ -139,10 +140,10 @@ class _OrganizationPageState extends State<OrganizationPage> {
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          const Icon(Icons.verified, color: Colors.green, size: 48),
+          const Icon(Icons.verified, color: AppColors.safe, size: 48),
           const SizedBox(height: 12),
           Text('${_link!.organizationName} 연동됨', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          Text('기관번호 ${_link!.orgCode}', style: const TextStyle(color: Colors.grey)),
+          Text('기관번호 ${_link!.orgCode}', style: const TextStyle(color: AppColors.textSecondary)),
           const SizedBox(height: 24),
           if (_saving)
             const CircularProgressIndicator()
@@ -163,7 +164,7 @@ class _OrganizationPageState extends State<OrganizationPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('기관에서 안내받은 6자리 기관번호를 입력하세요.', style: TextStyle(color: Colors.grey)),
+          const Text('기관에서 안내받은 6자리 기관번호를 입력하세요.', style: TextStyle(color: AppColors.textSecondary)),
           const SizedBox(height: 16),
           TextField(
             controller: _code,

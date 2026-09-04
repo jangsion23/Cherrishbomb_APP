@@ -3,8 +3,10 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../models/ward_contact.dart';
 import '../services/ward_service.dart';
+import '../theme/app_colors.dart';
 import '../utils/phone_format.dart';
 import '../widgets/add_contact_sheet.dart';
+import '../widgets/status_badge.dart';
 
 /// 비상 연락망 화면. 연락처 목록 조회 + 추가.
 /// (우선순위 드래그 변경은 백엔드 미지원이라 이번 범위에서 제외)
@@ -147,21 +149,43 @@ class _ContactsPageState extends State<ContactsPage> {
 
   Widget _contactCard(WardContact c) {
     return Card(
-      child: ListTile(
-        leading: CircleAvatar(child: Text(c.name.isNotEmpty ? c.name[0] : '?')),
-        title: Text('${c.name} (${c.relationship})'),
-        // 전화번호는 표시할 때만 하이픈, 우선순위는 서버값(C6)
-        subtitle: Text('${formatPhone(c.phone)}\n우선순위 ${c.priority}'),
-        isThreeLine: true,
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
+        child: Row(
           children: [
+            CircleAvatar(
+              backgroundColor: AppColors.primary.withValues(alpha: 0.12),
+              child: Text(
+                c.name.isNotEmpty ? c.name[0] : '?',
+                style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${c.name} (${c.relationship})',
+                    style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Text(formatPhone(c.phone), style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                      const SizedBox(width: 8),
+                      StatusBadge(label: '우선순위 ${c.priority}', color: AppColors.primary),
+                    ],
+                  ),
+                ],
+              ),
+            ),
             IconButton(
-              icon: const Icon(Icons.call, color: Colors.green),
+              icon: const Icon(Icons.call, color: AppColors.safe),
               tooltip: '전화 걸기',
               onPressed: () => _callPhone(c.phone),
             ),
-            // 수정 / 삭제 메뉴
             PopupMenuButton<String>(
               onSelected: (v) {
                 if (v == 'edit') _openSheet(existing: c);

@@ -118,7 +118,12 @@ class _ActivityLogPageState extends State<ActivityLogPage> {
     return Scaffold(
       appBar: const AppHeader(),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Text('활동 · 낙상 이력', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+          ),
           LogFilterBar(
             from: _from,
             to: _to,
@@ -126,7 +131,6 @@ class _ActivityLogPageState extends State<ActivityLogPage> {
             onPickTo: () => _pickDate(isFrom: false),
             onSearch: _search,
           ),
-          const Divider(height: 1),
           Expanded(child: _buildBody()),
         ],
       ),

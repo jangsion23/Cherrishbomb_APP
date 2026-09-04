@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 
-/// 온라인 상태 카드 (초록 점 + 온라인/오프라인 + 마지막 신호).
+/// 온라인 상태 카드 (점 + 온라인/오프라인 + 마지막 신호).
 class DeviceOnlineCard extends StatelessWidget {
   final bool online;
   final String lastSeen;
@@ -8,6 +9,7 @@ class DeviceOnlineCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = online ? AppColors.safe : AppColors.textSecondary;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -16,13 +18,16 @@ class DeviceOnlineCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.circle, size: 12, color: online ? Colors.green : Colors.grey),
+                Icon(Icons.circle, size: 12, color: color),
                 const SizedBox(width: 8),
-                Text(online ? '온라인' : '오프라인', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(
+                  online ? '온라인' : '오프라인',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                ),
               ],
             ),
             const SizedBox(height: 8),
-            Text('마지막 신호: $lastSeen', style: const TextStyle(color: Colors.grey)),
+            Text('마지막 신호: $lastSeen', style: const TextStyle(color: AppColors.textSecondary)),
           ],
         ),
       ),
@@ -40,12 +45,15 @@ class DeviceStatBox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 24),
+        padding: const EdgeInsets.symmetric(vertical: 22),
         child: Column(
           children: [
-            Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+            ),
             const SizedBox(height: 4),
-            Text(label, style: const TextStyle(fontSize: 13, color: Colors.grey)),
+            Text(label, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
           ],
         ),
       ),
@@ -53,10 +61,12 @@ class DeviceStatBox extends StatelessWidget {
   }
 }
 
-/// 설치 위치 카드. (백엔드 미제공 → 임시 표시)
-class DeviceInstallCard extends StatelessWidget {
-  final String location;
-  const DeviceInstallCard({super.key, required this.location});
+/// 센서 3종 상태 카드. null=미확인 / true=정상 / false=이상.
+class DeviceSensorCard extends StatelessWidget {
+  final bool? vibrator;
+  final bool? radar;
+  final bool? thermal;
+  const DeviceSensorCard({super.key, this.vibrator, this.radar, this.thermal});
 
   @override
   Widget build(BuildContext context) {
@@ -64,36 +74,49 @@ class DeviceInstallCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('설치 위치', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              '센서 상태',
+              style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+            ),
+            const SizedBox(height: 12),
+            _row('진동 센서', vibrator),
             const SizedBox(height: 8),
-            Text(location, style: const TextStyle(color: Colors.grey)),
+            _row('레이더 센서', radar),
+            const SizedBox(height: 8),
+            _row('열화상 센서', thermal),
           ],
         ),
       ),
     );
   }
-}
 
-/// 기기 연결 이력 카드. (백엔드 미제공 → 연동 예정 안내)
-class DeviceHistoryCard extends StatelessWidget {
-  const DeviceHistoryCard({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Card(
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('기기 연결 이력', style: TextStyle(fontWeight: FontWeight.bold)),
-            SizedBox(height: 12),
-            Text('연결 이력은 추후 제공 예정입니다.', style: TextStyle(color: Colors.grey, fontSize: 13)),
-          ],
+  Widget _row(String name, bool? ok) {
+    final Color color;
+    final String label;
+    if (ok == null) {
+      color = AppColors.textSecondary;
+      label = '미확인';
+    } else if (ok) {
+      color = AppColors.safe;
+      label = '정상';
+    } else {
+      color = AppColors.danger;
+      label = '이상';
+    }
+    return Row(
+      children: [
+        Icon(Icons.circle, size: 10, color: color),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(name, style: const TextStyle(color: AppColors.textPrimary)),
         ),
-      ),
+        Text(
+          label,
+          style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 13),
+        ),
+      ],
     );
   }
 }

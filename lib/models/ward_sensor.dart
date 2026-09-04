@@ -7,6 +7,8 @@ class WardSensor {
   final bool? thermal; // 열화상 센서
   final bool deviceOnline; // 기기 연결 여부
   final String? deviceLastSeen; // 마지막 신호 시각(없으면 null)
+  final int? batteryPct; // 배터리 잔량(%) — 없으면 null
+  final int? rssi; // 신호 세기(dBm, 음수) — 없으면 null
 
   WardSensor({
     required this.status,
@@ -15,6 +17,8 @@ class WardSensor {
     required this.thermal,
     required this.deviceOnline,
     required this.deviceLastSeen,
+    this.batteryPct,
+    this.rssi,
   });
 
   factory WardSensor.fromJson(Map<String, dynamic> json) {
@@ -26,6 +30,8 @@ class WardSensor {
       thermal: json['thermal'],
       deviceOnline: json['deviceOnline'] ?? false,
       deviceLastSeen: json['deviceLastSeen'],
+      batteryPct: json['batteryPct'],
+      rssi: json['rssi'],
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/ward_health.dart';
+import '../theme/app_colors.dart';
 import '../utils/date_format.dart';
 
 /// 건강 정보 조회(읽기 전용) 뷰.
@@ -21,7 +22,7 @@ class HealthReadView extends StatelessWidget {
           Text(
             '최종 수정: ${_fmt(health.updatedAt)}'
             '${health.updatedByName != null ? ' (${health.updatedByName})' : ''}',
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
+            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
           ),
       ],
     );
@@ -32,8 +33,11 @@ class HealthReadView extends StatelessWidget {
     return Card(
       child: ListTile(
         leading: Icon(icon),
-        title: Text(label, style: const TextStyle(fontSize: 13, color: Colors.grey)),
-        subtitle: Text(empty ? '미입력' : value, style: TextStyle(fontSize: 16, color: empty ? Colors.grey : null)),
+        title: Text(label, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+        subtitle: Text(
+          empty ? '미입력' : value,
+          style: TextStyle(fontSize: 16, color: empty ? AppColors.textSecondary : null),
+        ),
       ),
     );
   }
